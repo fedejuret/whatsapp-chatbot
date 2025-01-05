@@ -1,12 +1,11 @@
 import { toAsk } from '@builderbot-plugins/openai-assistants'
 import { addKeyword, EVENTS } from '@builderbot/bot'
-import { BaileysProvider } from '@builderbot/provider-baileys';
 import { typing } from '~/utils/presence'
 import welcomeFlow from '../welcome.flow';
 
 const ASSISTANT_ID = process.env.ASSISTANT_ID ?? ''
 const userQueues = new Map();
-const userLocks = new Map(); // New lock mechanism
+const userLocks = new Map();
 const firstMessage = new Map();
 
 /**
@@ -18,7 +17,6 @@ const processUserMessage = async (ctx, { flowDynamic, state, provider }) => {
 
     const response = await toAsk(ASSISTANT_ID, ctx.body, state);
 
-    // Split the response into chunks and send them sequentially
     const chunks = response.split(/\n\n+/);
     for (const chunk of chunks) {
         const cleanedChunk = chunk.trim().replace(/【.*?】[ ] /g, "");
@@ -34,23 +32,23 @@ const handleQueue = async (userId) => {
     const queue = userQueues.get(userId);
 
     if (userLocks.get(userId)) {
-        return; // If locked, skip processing
+        return;
     }
 
     while (queue.length > 0) {
-        userLocks.set(userId, true); // Lock the queue
+        userLocks.set(userId, true);
         const { ctx, flowDynamic, state, provider } = queue.shift();
         try {
             await processUserMessage(ctx, { flowDynamic, state, provider });
         } catch (error) {
             console.error(`Error processing message for user ${userId}:`, error);
         } finally {
-            userLocks.set(userId, false); // Release the lock
+            userLocks.set(userId, false);
         }
     }
 
-    userLocks.delete(userId); // Remove the lock once all messages are processed
-    userQueues.delete(userId); // Remove the queue once all messages are processed
+    userLocks.delete(userId);
+    userQueues.delete(userId);
 };
 
 const executeAction = async (ctx, { flowDynamic, state, provider, gotoFlow,  }, step: number) => {
@@ -69,7 +67,6 @@ const executeAction = async (ctx, { flowDynamic, state, provider, gotoFlow,  }, 
     const queue = userQueues.get(userId);
     queue.push({ ctx, flowDynamic, state, provider });
 
-    // If this is the only message   in the queue, process it immediately
     if (!userLocks.get(userId) && queue.length === 1) {
         await handleQueue(userId);
     }
@@ -79,7 +76,7 @@ const executeAction = async (ctx, { flowDynamic, state, provider, gotoFlow,  }, 
 }
 
 const softwareDevelopmentFlow = addKeyword(EVENTS.ACTION)
-    .addAnswer('Excelete, por favor escribe tu consulta lo mas completa posible a continuacion:', { capture: true } )
+    .addAnswer('Excelete, por favor escribe tu consulta lo mas completa posible a continuación:', { capture: true } )
     .addAction(async (ctx, data) => {
         return executeAction(ctx, data, 3)
     })

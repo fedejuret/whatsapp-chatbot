@@ -1,0 +1,16 @@
+meta {
+  name: Manage
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/v1/blacklist
+  body: formUrlEncoded
+  auth: none
+}
+
+body:form-urlencoded {
+  number: +5492996311707
+  intent: add
+}

@@ -1,0 +1,17 @@
+meta {
+  name: Send Message
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/v1/messages
+  body: formUrlEncoded
+  auth: none
+}
+
+body:form-urlencoded {
+  number: +5492996311707
+  message: Prueba de envio desde el bot
+  urlMedia: https://res.cloudinary.com/dmchfpypx/image/upload/v1731889361/w1iz4ac30smouwn28pr9.jpg
+}

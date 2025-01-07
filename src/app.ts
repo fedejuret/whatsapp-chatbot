@@ -5,13 +5,34 @@ import welcomeFlow from '~/flows/welcome.flow'
 import howCanHelpYouFlow from '~/flows/how_can_i_help_you.flow'
 import softwareDevelopmentFlow from "./flows/software_development_services/main_flow"
 import { adapterDB } from "./database"
+import { PostgreSQLAdapter } from "@builderbot/database-postgres"
+import { numberClean } from "./utils/number"
 
 const PORT = process.env.PORT ?? 3008
 
+const blackListFlow = addKeyword<BaileysProvider, PostgreSQLAdapter>('!m')
+    .addAction(async (ctx, { blacklist, flowDynamic }) => {
+        if (ctx.from === process.env.BOT_BUMBER) {
+            const toMute = numberClean(ctx.body)
+            const check = blacklist.checkIf(toMute)
+            if (!check) {
+                blacklist.add(toMute)
+                await flowDynamic(`❌ ${toMute} muted`)
+                return
+            }
+            blacklist.remove(toMute)
+            await flowDynamic(`🆗 ${toMute} unmuted`)
+            return
+        }
+})
+
 const main = async () => {
-    const adapterFlow = createFlow([welcomeFlow, howCanHelpYouFlow, softwareDevelopmentFlow])
+    const adapterFlow = createFlow([welcomeFlow, howCanHelpYouFlow, softwareDevelopmentFlow, blackListFlow])
     
-    const adapterProvider = createProvider(BaileysProvider)
+    const adapterProvider = createProvider(BaileysProvider, {
+        groupsIgnore: true,
+        writeMyself: 'both'
+    })
 
     const { handleCtx, httpServer } = await createBot({
         flow: adapterFlow,

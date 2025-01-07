@@ -8,4 +8,5 @@ docker run \
   -v "$(pwd)/bot_sessions:/app/bot_sessions:rw" \
   --cap-add SYS_ADMIN \
   --restart always \
+  -d \
   builderbot:latest
